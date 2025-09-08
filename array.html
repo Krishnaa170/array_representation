@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Array Animation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .visualization {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .tree-container, .array-container {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .tree-svg {
+            width: 100%;
+            height: 300px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+
+        .node {
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+
+        .node circle {
+            fill: rgba(255,255,255,0.9);
+            stroke: #4a90e2;
+            stroke-width: 3;
+            transition: all 0.3s ease;
+        }
+
+        .node text {
+            fill: #333;
+            font-weight: bold;
+            font-size: 14px;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        .node.highlighted circle {
+            fill: #ff6b6b;
+            stroke: #ff4757;
+            stroke-width: 4;
+            filter: drop-shadow(0 0 10px rgba(255, 107, 107, 0.6));
+        }
+
+        .node.highlighted text {
+            fill: white;
+        }
+
+        .edge {
+            stroke: rgba(255,255,255,0.7);
+            stroke-width: 2;
+            transition: all 0.3s ease;
+        }
+
+        .edge.highlighted {
+            stroke: #ff6b6b;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 5px rgba(255, 107, 107, 0.6));
+        }
+
+        .array-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .array-cell {
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            padding: 15px;
+            text-align: center;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .array-cell.highlighted {
+            background: #ff6b6b;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+            border-color: #ff4757;
+        }
+
+        .array-cell.null {
+            background: rgba(255,255,255,0.3);
+            color: #999;
+        }
+
+        .index-label {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            background: #4a90e2;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .info-panel {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .formula {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            border-left: 4px solid #4a90e2;
+        }
+
+        .current-node-info {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255,107,107,0.2);
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid rgba(255,107,107,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .visualization {
+                flex-direction: column;
+            }
+            
+            .controls {
+                flex-wrap: wrap;
+            }
+            
+            button {
+                margin: 5px;
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌳 Binary Tree ↔ Array Representation</h1>
+        
+        <div class="controls">
+            <button onclick="startAnimation()">▶ Start Animation</button>
+            <button onclick="resetAnimation()">🔄 Reset</button>
+            <button onclick="togglePause()" id="pauseBtn">⏸ Pause</button>
+            <button onclick="changeTree()">🔀 Change Tree</button>
+        </div>
+
+        <div class="visualization">
+            <div class="tree-container">
+                <h3 class="section-title">Binary Tree</h3>
+                <svg class="tree-svg" id="treeSvg">
+                    <!-- Tree will be drawn here -->
+                </svg>
+            </div>
+
+            <div class="array-container">
+                <h3 class="section-title">Array Representation</h3>
+                <div class="array-grid" id="arrayGrid">
+                    <!-- Array cells will be generated here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="current-node-info" id="nodeInfo" style="display: none;">
+                <strong>Current Node: <span id="currentNodeValue"></span></strong><br>
+                <span id="nodeDetails"></span>
+            </div>
+            
+            <h3>📋 Array Index Formulas (0-based):</h3>
+            <div class="formula">
+                <strong>Left Child:</strong> index = 2 × parent_index + 1<br>
+                <strong>Right Child:</strong> index = 2 × parent_index + 2<br>
+                <strong>Parent:</strong> index = ⌊(child_index - 1) / 2⌋
+            </div>
+            
+            <p><strong>How it works:</strong> Nodes are stored level by level, left to right. Empty positions are filled with null values to maintain the structure.</p>
+        </div>
+    </div>
+
+    <script>
+        let currentTree = 0;
+        let animationInterval;
+        let isPaused = false;
+        let currentStep = 0;
+
+        const trees = [
+            { nodes: [1, 2, 3, 4, 5, null, 6], name: "Complete Tree" },
+            { nodes: [10, 5, 15, 3, 7, null, 18, 1, null, 6, 8], name: "BST Example" },
+            { nodes: [1, 2, 3, null, 4, null, null, null, null, null, null, null, null, 5], name: "Sparse Tree" },
+            { nodes: [50, 30, 70, 20, 40, 60, 80], name: "Balanced BST" }
+        ];
+
+        function drawTree() {
+            const svg = document.getElementById('treeSvg');
+            const tree = trees[currentTree];
+            svg.innerHTML = '';
+
+            const width = svg.clientWidth;
+            const height = 300;
+            const nodeRadius = 20;
+            const levelHeight = 60;
+
+            // Calculate positions for each node
+            const positions = [];
+            const levels = [];
+            
+            for (let i = 0; i < tree.nodes.length; i++) {
+                if (tree.nodes[i] !== null) {
+                    const level = Math.floor(Math.log2(i + 1));
+                    const positionInLevel = i - (Math.pow(2, level) - 1);
+                    const nodesInLevel = Math.pow(2, level);
+                    const levelWidth = width - 80;
+                    
+                    const x = 40 + (levelWidth / (nodesInLevel + 1)) * (positionInLevel + 1);
+                    const y = 40 + level * levelHeight;
+                    
+                    positions[i] = { x, y, level };
+                    if (!levels[level]) levels[level] = [];
+                    levels[level].push(i);
+                }
+            }
+
+            // Draw edges first
+            for (let i = 0; i < tree.nodes.length; i++) {
+                if (tree.nodes[i] !== null) {
+                    const leftChild = 2 * i + 1;
+                    const rightChild = 2 * i + 2;
+                    
+                    if (leftChild < tree.nodes.length && tree.nodes[leftChild] !== null) {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', positions[i].x);
+                        line.setAttribute('y1', positions[i].y);
+                        line.setAttribute('x2', positions[leftChild].x);
+                        line.setAttribute('y2', positions[leftChild].y);
+                        line.classList.add('edge');
+                        line.id = `edge-${i}-${leftChild}`;
+                        svg.appendChild(line);
+                    }
+                    
+                    if (rightChild < tree.nodes.length && tree.nodes[rightChild] !== null) {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', positions[i].x);
+                        line.setAttribute('y1', positions[i].y);
+                        line.setAttribute('x2', positions[rightChild].x);
+                        line.setAttribute('y2', positions[rightChild].y);
+                        line.classList.add('edge');
+                        line.id = `edge-${i}-${rightChild}`;
+                        svg.appendChild(line);
+                    }
+                }
+            }
+
+            // Draw nodes
+            for (let i = 0; i < tree.nodes.length; i++) {
+                if (tree.nodes[i] !== null) {
+                    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    group.classList.add('node');
+                    group.id = `node-${i}`;
+                    group.setAttribute('data-index', i);
+                    
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', positions[i].x);
+                    circle.setAttribute('cy', positions[i].y);
+                    circle.setAttribute('r', nodeRadius);
+                    
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', positions[i].x);
+                    text.setAttribute('y', positions[i].y);
+                    text.textContent = tree.nodes[i];
+                    
+                    group.appendChild(circle);
+                    group.appendChild(text);
+                    svg.appendChild(group);
+                    
+                    group.addEventListener('click', () => highlightNode(i));
+                }
+            }
+        }
+
+        function drawArray() {
+            const arrayGrid = document.getElementById('arrayGrid');
+            const tree = trees[currentTree];
+            arrayGrid.innerHTML = '';
+
+            tree.nodes.forEach((value, index) => {
+                const cell = document.createElement('div');
+                cell.classList.add('array-cell');
+                cell.id = `array-${index}`;
+                
+                const indexLabel = document.createElement('div');
+                indexLabel.classList.add('index-label');
+                indexLabel.textContent = index;
+                cell.appendChild(indexLabel);
+                
+                if (value === null) {
+                    cell.textContent = 'null';
+                    cell.classList.add('null');
+                } else {
+                    cell.textContent = value;
+                }
+                
+                cell.addEventListener('click', () => highlightNode(index));
+                arrayGrid.appendChild(cell);
+            });
+        }
+
+        function highlightNode(index) {
+            clearHighlights();
+            
+            const tree = trees[currentTree];
+            if (tree.nodes[index] === null) return;
+            
+            // Highlight tree node
+            const treeNode = document.getElementById(`node-${index}`);
+            if (treeNode) treeNode.classList.add('highlighted');
+            
+            // Highlight array cell
+            const arrayCell = document.getElementById(`array-${index}`);
+            if (arrayCell) arrayCell.classList.add('highlighted');
+            
+            // Highlight edges to children
+            const leftChild = 2 * index + 1;
+            const rightChild = 2 * index + 2;
+            
+            if (leftChild < tree.nodes.length && tree.nodes[leftChild] !== null) {
+                const edge = document.getElementById(`edge-${index}-${leftChild}`);
+                if (edge) edge.classList.add('highlighted');
+            }
+            
+            if (rightChild < tree.nodes.length && tree.nodes[rightChild] !== null) {
+                const edge = document.getElementById(`edge-${index}-${rightChild}`);
+                if (edge) edge.classList.add('highlighted');
+            }
+            
+            // Show node information
+            showNodeInfo(index);
+        }
+
+        function showNodeInfo(index) {
+            const tree = trees[currentTree];
+            const nodeInfo = document.getElementById('nodeInfo');
+            const nodeValue = document.getElementById('currentNodeValue');
+            const nodeDetails = document.getElementById('nodeDetails');
+            
+            nodeValue.textContent = tree.nodes[index];
+            
+            const leftChild = 2 * index + 1;
+            const rightChild = 2 * index + 2;
+            const parent = Math.floor((index - 1) / 2);
+            
+            let details = `Array Index: ${index}`;
+            if (index > 0) details += ` | Parent: ${parent} (${tree.nodes[parent] || 'null'})`;
+            if (leftChild < tree.nodes.length) details += ` | Left Child: ${leftChild} (${tree.nodes[leftChild] || 'null'})`;
+            if (rightChild < tree.nodes.length) details += ` | Right Child: ${rightChild} (${tree.nodes[rightChild] || 'null'})`;
+            
+            nodeDetails.innerHTML = details;
+            nodeInfo.style.display = 'block';
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
+            document.getElementById('nodeInfo').style.display = 'none';
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            
+            const tree = trees[currentTree];
+            const validIndices = [];
+            
+            tree.nodes.forEach((value, index) => {
+                if (value !== null) validIndices.push(index);
+            });
+            
+            currentStep = 0;
+            isPaused = false;
+            document.getElementById('pauseBtn').textContent = '⏸ Pause';
+            
+            animationInterval = setInterval(() => {
+                if (!isPaused) {
+                    clearHighlights();
+                    highlightNode(validIndices[currentStep]);
+                    currentStep = (currentStep + 1) % validIndices.length;
+                }
+            }, 1500);
+        }
+
+        function resetAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            clearHighlights();
+            currentStep = 0;
+            isPaused = false;
+            document.getElementById('pauseBtn').textContent = '⏸ Pause';
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').textContent = isPaused ? '▶ Resume' : '⏸ Pause';
+        }
+
+        function changeTree() {
+            currentTree = (currentTree + 1) % trees.length;
+            resetAnimation();
+            drawTree();
+            drawArray();
+        }
+
+        // Initialize
+        drawTree();
+        drawArray();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            drawTree();
+        });
+    </script>
+</body>
+</html>
